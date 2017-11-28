@@ -11,9 +11,7 @@ import negotiator.utility.AdditiveUtilitySpace;
 import negotiator.utility.Evaluator;
 import negotiator.utility.EvaluatorDiscrete;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * ExampleAgent returns the bid that maximizes its own utility for half of the negotiation session.
@@ -30,7 +28,30 @@ public class AgentGetLucky extends AbstractNegotiationParty {
     private Set<Map.Entry<Objective, Evaluator>> evaluators;
     private OpponentModel op1 = new OpponentModel();
     private OpponentModel op2 = new OpponentModel();
+    private Preference pref = new Preference();
     private int roundCount = 0;
+
+    private class Preference {
+        public HashMap<String, IssueWeight> weights = new HashMap<>();
+
+        public void addIssue(IssueDiscrete issue) {
+            IssueWeight iw = weights.getOrDefault(issue.getName(), new IssueWeight());
+            weights.put(issue.getName(), iw);
+        }
+
+        public class IssueWeight {
+            public HashMap<String, Integer> weightings = new HashMap<>();
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            for (Map.Entry<String, IssueWeight> entry: this.weights.entrySet()) {
+                sb.append("\t" + entry.getKey() + ": " + entry.getValue().weightings + "\n");
+            }
+            return sb.toString();
+        }
+    }
 
     // https://github.com/tdgunes/ExampleAgent/wiki/Accessing-the-evaluation-of-a-value
     @Override
@@ -49,6 +70,7 @@ public class AgentGetLucky extends AbstractNegotiationParty {
 
             op1.addIssue(issueDiscrete);
             op2.addIssue(issueDiscrete);
+            pref.addIssue(issueDiscrete);
 
             OpponentModel.IssueStore is1 = op1.getIssue(issueDiscrete);
             OpponentModel.IssueStore is2 = op2.getIssue(issueDiscrete);
@@ -57,17 +79,19 @@ public class AgentGetLucky extends AbstractNegotiationParty {
 
             for (ValueDiscrete valueDiscrete : issueDiscrete.getValues()) {
 
-//                System.out.println("ValueName " + valueDiscrete.getValue());
-//                System.out.println("Evaluation(getValue): " + evaluatorDiscrete.getValue(valueDiscrete));
+                System.out.println("ValueName " + valueDiscrete.getValue());
+                System.out.println("Evaluation(getValue): " + evaluatorDiscrete.getValue(valueDiscrete));
 
                 is1.addValue(valueDiscrete);
                 is2.addValue(valueDiscrete);
 
-//                try {
-//                    System.out.println("Evaluation(getEvaluation): " + evaluatorDiscrete.getEvaluation(valueDiscrete));
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
+                try {
+                    Integer vv = evaluatorDiscrete.getValue(valueDiscrete);
+                    pref.weights.get(issueDiscrete.getName())
+                            .weightings.put(valueDiscrete.getValue(), vv);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -106,7 +130,9 @@ public class AgentGetLucky extends AbstractNegotiationParty {
             return new Accept(this.getPartyId(), lastReceivedBid);
         }
 
-
+        Offer max = new Offer(this.getPartyId(), this.getMaxUtilityBid());
+        this.myLastBid = max.getBid();
+        return max;
     }
 
     /**
@@ -184,6 +210,7 @@ public class AgentGetLucky extends AbstractNegotiationParty {
     protected void finalize() throws Throwable {
         System.out.println(op1.toString());
         System.out.println(op2.toString());
+        System.out.println(pref.toString());
         super.finalize();
     }
 }

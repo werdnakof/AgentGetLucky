@@ -34,20 +34,40 @@ public class AgentGetLucky extends AbstractNegotiationParty {
     private class Preference {
         public HashMap<String, IssueWeight> weights = new HashMap<>();
 
-        public void addIssue(IssueDiscrete issue) {
-            IssueWeight iw = weights.getOrDefault(issue.getName(), new IssueWeight());
+        public void addIssue(IssueDiscrete issue, Double weighting) {
+            IssueWeight iw = weights.getOrDefault(issue.getName(), new IssueWeight(weighting));
             weights.put(issue.getName(), iw);
         }
 
         public class IssueWeight {
-            public HashMap<String, Integer> weightings = new HashMap<>();
+            public Double weighting;
+            public Integer maxValue = Integer.MIN_VALUE;
+            private HashMap<String, Integer> evals = new HashMap<>();
+
+            public IssueWeight(Double weighting) {
+                this.weighting = weighting;
+            }
+
+            public void putWeight(ValueDiscrete value, Integer weight ) {
+                this.evals.put(value.getValue(), weight);
+                if(weight > maxValue) maxValue = weight;
+            }
+
+            public Integer getWeight(ValueDiscrete value) {
+                return this.evals.get(value.getValue());
+            }
+
+            public Double getDisUtility(ValueDiscrete value) {
+                Integer weight = this.getWeight(value);
+                return weighting * (weight - this.maxValue) / this.maxValue;
+            }
         }
 
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
             for (Map.Entry<String, IssueWeight> entry: this.weights.entrySet()) {
-                sb.append("\t" + entry.getKey() + ": " + entry.getValue().weightings + "\n");
+                sb.append("\t" + entry.getKey() + ": " + entry.getValue().evals + "\n");
             }
             return sb.toString();
         }
@@ -70,7 +90,7 @@ public class AgentGetLucky extends AbstractNegotiationParty {
 
             op1.addIssue(issueDiscrete);
             op2.addIssue(issueDiscrete);
-            pref.addIssue(issueDiscrete);
+            pref.addIssue(issueDiscrete, this.space.getWeight(issueNumber));
 
             OpponentModel.IssueStore is1 = op1.getIssue(issueDiscrete);
             OpponentModel.IssueStore is2 = op2.getIssue(issueDiscrete);
@@ -82,17 +102,27 @@ public class AgentGetLucky extends AbstractNegotiationParty {
                 System.out.println("ValueName " + valueDiscrete.getValue());
                 System.out.println("Evaluation(getValue): " + evaluatorDiscrete.getValue(valueDiscrete));
 
+                try {
+                    System.out.println("Evaluation(getEvaluation): " + evaluatorDiscrete.getEvaluation(valueDiscrete));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
                 is1.addValue(valueDiscrete);
                 is2.addValue(valueDiscrete);
 
                 try {
                     Integer vv = evaluatorDiscrete.getValue(valueDiscrete);
-                    pref.weights.get(issueDiscrete.getName())
-                            .weightings.put(valueDiscrete.getValue(), vv);
+                    pref.weights
+                        .get(issueDiscrete.getName())
+                        .putWeight(valueDiscrete, vv);
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
+
+            System.out.println(pref.toString());
         }
     }
 

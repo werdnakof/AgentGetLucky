@@ -30,6 +30,7 @@ public class AgentGetLucky extends AbstractNegotiationParty {
     private OpponentModel op2 = new OpponentModel();
     private Preference pref = new Preference();
     private int roundCount = 0;
+    private Double omega = 0.5;
 
     private class Preference {
         public HashMap<String, IssueWeight> weights = new HashMap<>();
@@ -160,9 +161,71 @@ public class AgentGetLucky extends AbstractNegotiationParty {
             return new Accept(this.getPartyId(), lastReceivedBid);
         }
 
-        Offer max = new Offer(this.getPartyId(), this.getMaxUtilityBid());
-        this.myLastBid = max.getBid();
-        return max;
+        Offer newOffer = new Offer(this.getPartyId(), this.getBid());
+        this.myLastBid = newOffer.getBid();
+        return newOffer;
+    }
+
+    private Bid getBid() {
+        Double time = this.timeline.getTime();
+        Double cdu = 0D;
+        List<Issue> shuffle = new ArrayList<>(this.issues);
+        java.util.Collections.shuffle(shuffle);
+
+        HashMap<Integer, Value> bidStore = new HashMap<>();
+
+        for(Issue issue: shuffle) {
+            IssueDiscrete issueDiscrete = (IssueDiscrete) issue;
+            ArrayList<ValueDiscrete> al = new ArrayList<>();
+            ArrayList<Double> oo = new ArrayList<>();
+            Double sumoo = 0D;
+
+            Double highestDis = Double.MIN_VALUE;
+            ValueDiscrete highestDisValue = issueDiscrete.getValues().get(0);
+
+            for(ValueDiscrete valueDiscrete: issueDiscrete.getValues()) {
+                Double dis = this.pref.weights.get(issueDiscrete.getName()).getDisUtility(valueDiscrete);
+
+                // keep tracks of value with highest dis-utiltiy
+                if(dis > highestDis) {
+                    highestDis = dis;
+                    highestDisValue = valueDiscrete;
+                }
+
+                if(cdu + dis < this.thresholdLimit(time) - 1) continue;
+
+                Double combined = getCombinedOpponentModelWeight(issueDiscrete, valueDiscrete);
+                oo.add(combined);
+                al.add(valueDiscrete);
+
+                sumoo += combined;
+            }
+
+            if(al.size() == 0) al.add(highestDisValue);
+
+            Integer idx = 0;
+            Double rand = Math.random();
+            for(int i = 0; i < oo.size(); i++) {
+                if(rand < oo.get(i)/sumoo) {
+                    idx = i;
+                    break;
+                }
+            }
+
+            ValueDiscrete picked = al.get(idx);
+
+            bidStore.put(issueDiscrete.getNumber(), picked);
+
+            cdu += this.pref.weights.get(issueDiscrete.getName()).getDisUtility(picked);
+        }
+
+        return new Bid(this.space.getDomain(), bidStore);
+    }
+
+    private Double getCombinedOpponentModelWeight(IssueDiscrete issue, ValueDiscrete value) {
+        Integer oo1 = op1.getIssue(issue).getValueCount(value);
+        Integer oo2 = op2.getIssue(issue).getValueCount(value);
+        return omega * oo1 + (1-omega) * oo2;
     }
 
     /**
@@ -196,7 +259,6 @@ public class AgentGetLucky extends AbstractNegotiationParty {
     }
 
     // helper methods
-
     private Double thresholdLimit(Double time) {
         if(time > 1.0D) return 0.8;
         else return 1.0D - (0.2 * time);

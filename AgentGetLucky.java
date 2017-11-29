@@ -14,12 +14,15 @@ import negotiator.utility.EvaluatorDiscrete;
 import java.util.*;
 
 /**
- * ExampleAgent returns the bid that maximizes its own utility for half of the negotiation session.
- * In the second half, it offers a random bid. It only accepts the bid on the table in this phase,
- * if the utility of the bid is higher than Example Agent's last bid.
+ * Like the legend of the phoenix
+ * All ends with beginnings
+ * What keeps the planet spinning (uh)
+ * The force of love beginning
+ * We've come too far to give up who we are
+ * So let's raise the bar and our cups to the stars...
  */
 public class AgentGetLucky extends AbstractNegotiationParty {
-    private final String description = "Agent Get Lucky";
+    private final String description = "AgentGetLucky";
 
     private Bid lastReceivedBid; // offer on the table
     private Bid myLastBid;
@@ -32,6 +35,9 @@ public class AgentGetLucky extends AbstractNegotiationParty {
     private int roundCount = 0;
     private Double omega = 0.5;
 
+    /**
+     * A class for storing our agent's value preference in issues
+     */
     private class Preference {
         public HashMap<String, IssueWeight> weights = new HashMap<>();
 
@@ -82,6 +88,7 @@ public class AgentGetLucky extends AbstractNegotiationParty {
         this.issues = this.space.getDomain().getIssues();
         this.evaluators = this.space.getEvaluators();
 
+        // Init issues and values in opponent's model
         for(Issue issue: this.issues) {
             int issueNumber = issue.getNumber();
 
@@ -100,14 +107,14 @@ public class AgentGetLucky extends AbstractNegotiationParty {
 
             for (ValueDiscrete valueDiscrete : issueDiscrete.getValues()) {
 
-                System.out.println("ValueName " + valueDiscrete.getValue());
-                System.out.println("Evaluation(getValue): " + evaluatorDiscrete.getValue(valueDiscrete));
+//                System.out.println("ValueName " + valueDiscrete.getValue());
+//                System.out.println("Evaluation(getValue): " + evaluatorDiscrete.getValue(valueDiscrete));
 
-                try {
-                    System.out.println("Evaluation(getEvaluation): " + evaluatorDiscrete.getEvaluation(valueDiscrete));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+//                try {
+//                    System.out.println("Evaluation(getEvaluation): " + evaluatorDiscrete.getEvaluation(valueDiscrete));
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
 
                 is1.addValue(valueDiscrete);
                 is2.addValue(valueDiscrete);
@@ -123,7 +130,7 @@ public class AgentGetLucky extends AbstractNegotiationParty {
                 }
             }
 
-            System.out.println(pref.toString());
+//            System.out.println(pref.toString());
         }
     }
 

@@ -33,7 +33,6 @@ public class AgentGetLucky extends AbstractNegotiationParty {
     private OpponentModel op2 = new OpponentModel();
     private Preference pref = new Preference();
     private int roundCount = 0;
-    private Double omega = 0.5;
 
     /**
      * A class for storing our agent's value preference in issues
@@ -168,7 +167,7 @@ public class AgentGetLucky extends AbstractNegotiationParty {
         }
 
         // Accept anything higher than our threshold limit in the 2nd half of negotiation
-        if(this.utilitySpace.getUtility(lastReceivedBid) > this.thresholdLimit(time)) {
+        if(this.utilitySpace.getUtility(lastReceivedBid) > this.getThresholdLimit(time)) {
             return new Accept(this.getPartyId(), lastReceivedBid);
         }
 
@@ -222,7 +221,7 @@ public class AgentGetLucky extends AbstractNegotiationParty {
             ArrayList<ValueDiscrete> valueStores = new ArrayList<>();
             ArrayList<Double> combinedOpponentWeights = new ArrayList<>();
             Double sumoo = 0D;
-            Double disUtilityThreshold = this.thresholdLimit(time) - 1;
+            Double disUtilityThreshold = this.getThresholdLimit(time) - 1;
 
             // keep track highest dis-utility if no value is above disUtilityThreshold
             Double highestDis = Double.MIN_VALUE;
@@ -272,12 +271,17 @@ public class AgentGetLucky extends AbstractNegotiationParty {
     private Double getCombinedOpponentModelWeight(IssueDiscrete issue, ValueDiscrete value) {
         Integer oo1 = op1.getIssue(issue).getValueCount(value);
         Integer oo2 = op2.getIssue(issue).getValueCount(value);
+        Double omega = this.getOmega(true); // change this to false for equal weight i.e. 0.5
         return omega * oo1 + (1-omega) * oo2;
     }
 
-    private Double thresholdLimit(Double time) {
+    private Double getThresholdLimit(Double time) {
         if(time > 1.0D) return 0.8;
         else return 1.0D - (0.2 * time);
+    }
+
+    private Double getOmega(Boolean isRandom) {
+        return isRandom ? Math.random() : 0.5;
     }
 
     private OpponentModel getOpponentByName(String name) {

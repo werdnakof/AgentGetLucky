@@ -296,7 +296,7 @@ public class AgentGetLucky extends AbstractNegotiationParty {
     }
 
     private Double getOmega(Boolean isRandom) {
-        int pos = getRandomNumberInRange(0, omegas.length);
+        int pos = getRandomNumberInRange(0, omegas.length-1);
         return isRandom ? omegas[pos] : 0.5;
     }
 

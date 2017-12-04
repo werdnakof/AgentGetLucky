@@ -202,7 +202,7 @@ public class AgentGetLucky extends AbstractNegotiationParty {
                 for (Issue issue: currentBid.getIssues()) {
                     IssueDiscrete isd = (IssueDiscrete) issue;
                     ValueDiscrete vd = (ValueDiscrete) currentBid.getValue(issue.getNumber());
-                    op.getIssue(isd).addCount(vd);
+                    op.getIssue(isd).addCount(vd, getTimeLine().getTime());
                 }
             }
         }
@@ -270,8 +270,8 @@ public class AgentGetLucky extends AbstractNegotiationParty {
     }
 
     private Double getCombinedOpponentModelWeight(IssueDiscrete issue, ValueDiscrete value) {
-        Integer oo1 = op1.getIssue(issue).getValueCount(value);
-        Integer oo2 = op2.getIssue(issue).getValueCount(value);
+        Double oo1 = op1.getIssue(issue).getValueCount(value);
+        Double oo2 = op2.getIssue(issue).getValueCount(value);
         Double omega = this.getOmega(true); // change this to false for equal weight i.e. 0.5
         return omega * oo1 + (1-omega) * oo2;
     }

@@ -8,6 +8,7 @@ import java.util.Map;
 public class OpponentModel {
     public HashMap<String, IssueStore> issues;
     private String opponentName;
+    private static double alpha = 1.3;
 
     public OpponentModel() {
         this.issues = new HashMap<>();
@@ -33,26 +34,30 @@ public class OpponentModel {
 
     public class IssueStore {
         public IssueDiscrete issue;
-        public HashMap<String, Integer> values = new HashMap<>();
+        public HashMap<String, Double> values = new HashMap<>();
 
         public IssueStore(IssueDiscrete issue) {
             this.issue = issue;
         }
 
         public void addValue(ValueDiscrete valueDiscrete) {
-            Integer valueCount = this.values.getOrDefault(valueDiscrete.getValue(), 0);
+            Double valueCount = this.values.getOrDefault(valueDiscrete.getValue(), 0.00);
             this.values.put(valueDiscrete.getValue(), valueCount);
         }
 
-        public void addCount(ValueDiscrete valueDiscrete) {
+        public void addCount(ValueDiscrete valueDiscrete, Double time) {
             if(this.values.containsKey(valueDiscrete.getValue())) {
-                Integer valueCount = this.values.get(valueDiscrete.getValue());
-                valueCount++;
+                Double valueCount = this.values.get(valueDiscrete.getValue());
+                valueCount+=this.getWeight(time);
                 this.values.put(valueDiscrete.getValue(), valueCount);
             }
         }
 
-        public Integer getValueCount(ValueDiscrete valueDiscrete) {
+        private Double getWeight(Double time) {
+            return 1 - Math.pow(time, alpha);
+        }
+
+        public Double getValueCount(ValueDiscrete valueDiscrete) {
             return this.values.getOrDefault(valueDiscrete, null);
         }
     }
@@ -74,8 +79,8 @@ public class OpponentModel {
         IssueStore id = model.getIssue(idd);
 
         ValueDiscrete vd = id.issue.getValue(0);
-        id.addCount(vd);
-        id.addCount(vd);
+        id.addCount(vd, 0.0);
+        id.addCount(vd, 0.0);
 
         System.out.println(model.getIssue(idd).getValueCount(vd));
     }

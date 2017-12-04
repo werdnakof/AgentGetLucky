@@ -33,6 +33,7 @@ public class AgentGetLucky extends AbstractNegotiationParty {
     private OpponentModel op2 = new OpponentModel();
     private Preference pref = new Preference();
     private int roundCount = 0;
+    private Double[] omegas = new Double[] {0.0, 0.25, 0.50, 0.75, 1.00};
 
     /**
      * A class for storing our agent's value preference in issues
@@ -276,12 +277,37 @@ public class AgentGetLucky extends AbstractNegotiationParty {
     }
 
     private Double getThresholdLimit(Double time) {
-        if(time > 1.0D) return 0.8;
-        else return 1.0D - (0.2 * time);
+//        if(time > 1.0D) return 0.8;
+//        else return 1.0D - (0.2 * time);
+
+        // Issue 3 run 4.2 code - taken from ParsCat
+        double util = 1.0D;
+        if (time <= 0.25D) util = 1.0D - time * 0.4D;
+        if (time > 0.25D && time <= 0.375D) util = 0.9D + (time - 0.25D) * 0.4D;
+        if (time > 0.375D && time <= 0.5D) util = 0.95D - (time - 0.375D) * 0.4D;
+        if (time > 0.5D && time <= 0.6D) util = 0.9D - (time - 0.5D);
+        if (time > 0.6D && time <= 0.7D) util = 0.8D + (time - 0.6D) * 2.0D;
+        if (time > 0.7D && time <= 0.8D) util = 1.0D - (time - 0.7D) * 3.0D;
+        if (time > 0.8D && time <= 0.9D) util = 0.7D + (time - 0.8D) * 1.0D;
+        if (time > 0.9D && time <= 0.95D) util = 0.8D - (time - 0.9D) * 6.0D;
+        if (time > 0.95D) util = 0.5D + (time - 0.95D) * 4.0D;
+        if (time > 1.0D) util = 0.7D;
+        return util;
     }
 
     private Double getOmega(Boolean isRandom) {
-        return isRandom ? Math.random() : 0.5;
+        int pos = getRandomNumberInRange(0, omegas.length);
+        return isRandom ? omegas[pos] : 0.5;
+    }
+
+    private static int getRandomNumberInRange(int min, int max) {
+
+        if (min >= max) {
+            throw new IllegalArgumentException("max must be greater than min");
+        }
+
+        Random r = new Random();
+        return r.nextInt((max - min) + 1) + min;
     }
 
     private OpponentModel getOpponentByName(String name) {
